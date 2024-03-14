@@ -37,6 +37,7 @@ cat m5out/config.ini | grep issue
   | DerivO3CPU | 8           | 1GHz      | 256kB    |
   | DerivO3CPU | 8           | 1GHz      | 2MB      |
   | DerivO3CPU | 8           | 1GHz      | 16MB     |
+
   公共参数：
   -   Memory: DDR3_1600_8x8
  -   2-level cache hierarchy (64KB L1 icache, 64KB L1 dcache, L2可变)
