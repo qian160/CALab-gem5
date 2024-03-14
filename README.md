@@ -45,10 +45,6 @@ system.cpu.icache_port = system.l1_cache.cpu_side
 ```
 system.membus.cpu_side_ports = system.cpu.icache_port 
 ```
-一些预定义端口名：
-
-system.membus.cpu_side_ports：	是接收方，而且可以被多次连接
-system.cpu.icache_port：	是发送方
 
 ### cache
 由于历史原因，目前的gem5中有两种cache：**Classic caches**  和**Ruby**，区别貌似是Ruby可以用来测试cache一致性，并且需要我们提供协议的细节。而Classic caches已经内置了一种cache一致性协议。如果我们不想关心协议细节的话就可以选择简化版的Classic caches。未来有把这两套cache系统统一的打算。
@@ -61,23 +57,30 @@ system.cpu.icache_port：	是发送方
 之后每次如果要修改计算机的配置信息，不需要通过重新编译gem5的方式，只要通过改变配置文件就可以了。
 在configs/examples下面提供了一些模板可供参考，但是复杂度都比较高，而且对于我这种没有学过python的人更是不友好。。。官方的教程比较用户友好，他会从最简单的脚本开始讲解。
 
-### 运行模式
+## 运行模式
 gem5有两种运行模式：
 
-#### 全系统(Full System, FS)：
+### 全系统(Full System, FS)：
 模拟整个计算机的硬件系统，各种设备的配置信息都需要自己亲自指明，所以配置文件写起来会比较麻烦。当我们需要做一些比较细致的工作时会采用这种方式，适合重度使用
 
-#### 系统调用(Syscall Emulation, SE):
+### 系统调用(Syscall Emulation, SE):
 主要只模拟CPU和内存系统，配置起来容易一些。当我们不想关心太多的硬件细节，只想用gem5来做一些轻度的使用时就可以用这种运行模式
 
-### 配置文件的编写
+## 配置文件的编写
 
 ![A simple system configuration without
 caches.](https://www.gem5.org/pages/static/figures/simple_config.png)
 
-在simple.py中描述了上面这个结构图。教程上面写得比较详细，推荐去看那个。后面还有进阶的配置信息。
-#### 参数传递
+在simple.py中描述了上面这个结构图。教程上面写得比较详细，推荐去看那个。后面还有进阶的配置信息。感觉这个文件有点像是verilog的top模块
+### 参数传递
+可以通过在Options.py中添加自定义的参数解析（183行），然后在se.py中通过args.xxx来访问那个参数。具体可以参考lab2
+
+## 修改GEM5源代码
 todo
+
+## 数据统计
+
+
 ## 装环境遇到的一些问题：
 
  1. 缺少png.h头文件
