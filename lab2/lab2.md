@@ -38,7 +38,7 @@ cat m5out/config.ini | grep issue
   | DerivO3CPU | 8           | 1GHz      | 2MB      |
   | DerivO3CPU | 8           | 1GHz      | 16MB     |
 
-  公共参数：
+公共参数：
   -   Memory: DDR3_1600_8x8
  -   2-level cache hierarchy (64KB L1 icache, 64KB L1 dcache, L2可变)
 
@@ -142,19 +142,47 @@ int main(int argc, char* argv[]) {
 
 ## 问题解答：
 1.  应该使用什么指标来比较不同系统配置之间的性能？为什么？
-我认为运行时间 (时钟周期数)是个不错的选择，因为它便于统计，而且比较客观，对于所有的程序和系统来说都是公平的
-2.  是否有任何基准测试受益于删除 L2 缓存？请说明理由。
-有，主要是拿config1的数据和后面三个作比较，可以发现lfsr在移除L2 cache后的simSeconds更短。这可能是因为该程序的规模较小，而且局部性不错，L1 cache已经完全够用。引入L2 cache反而带来了额外的开销。
+
+> 我认为运行时间 (时钟周期数)是个不错的选择，因为它便于统计，而且比较客观，对于所有的程序和系统来说都是公平的
+
+2.  是否有任何基准测试受益于删除 L2 缓存？请说
+明理由。
+
+> 有，主要是拿config1的数据和后面三个作比较，可以发现lfsr在移除L2 cache后的simSeconds更短。这可能是因为该程序的规模较小，而且局部性不错，L1 cache已经完全够用。引入L2 cache反而带来了额外的开销。
+
 3.  在讨论程序的运行行为时，我们会遇到a) memory regularity，b) control regularity，和 c) memory locality，请谈一谈你对他们的理解。
-上面已经有了
+
+> 上面已经有了
+
 4.  对于这三个程序属性——a) memory regularity，b) control regularity，和 c) memory locality——从 stats.txt 中举出一个统计指标（或统计指标的组合），通过该指标你可以区分一个workload是否具有上述的某一个属性。 （例如，对于control regularity，它与分支指令的数量成反比。但你一定可以想到一个更好的）。
-上面已经有了
+
+> 上面已经有了
+
 5.  对于每一个实验中用到的benchmark，描述它的a) memory regularity, b) control regularity, c) memory locality；解释该benchmark对哪个微架构参数最敏感（换句话说，你认为“瓶颈”是什么），并使用推理或统计数据来证明其合理性。
+
+| benchmark | memory regularity | control regularity | locality | 说明                                                         |
+| --------- | ----------------- | ------------------ | -------- | ------------------------------------------------------------ |
+| lfsr      | 较好               | 一般                | 较好      | 顺序访问数据，跳转不依赖特定数据（有规律的循环）。但经过优化后的程序规模较小，导致统计出来的指标不稳定（把gcc编译选项改为-O0后代码量增多，数据就变好看了）             |
+| merge     | 好                 | 较好                | 好        | 顺序访问数据，跳转依赖特定数据。程序规模大，统计结果比较稳定                 |
+| mm        | 好                 | 好                  | 好       | 顺序访问数据，跳转不依赖特定数据（有规律的循环）。程序规模大 |
+| sieve     | 一般               | 好                  | 一般      | 顺序访问数据，但数据有一定距离（特别是在p比较大的情况下），跳转依赖特定数据。程序规模大 |
+| spmv      | 较差               | 好                  | 较差      | 随机访问数据，跳转不依赖来特定数据（有规律的循环）。程序规模大 |
+
+| benchmark | 敏感微架构参数                             | 说明                                                         |
+| --------- | ------------------------------------------ | ------------------------------------------------------------ |
+| lfsr      | L1 D-cache latency                         | 程序局部性良好，64KB的L1 D-cache已经够用。降低L1 cache的延迟，可以降低每一次cache访问的时间。 |
+| merge     | L1 D-cache latency、CPU type               | 程序局部性良好，64KB的L1 D-cache已经够用。降低L1 cache的延迟，可以降低每一次cache访问的时间。同时，由于merge的control regularity相对不是特别好，若特定的CPU type能够达到更高的分支预测成功率，则可以提高总体性能。 |
+| mm        | L1 D-cache大小、L2 cache latency           | 程序需要的数据较大，无法全部存储在L1 D-cache中。若L1 D-cache更大，可以降低L1的miss rate。若L2 cache的延迟更小，可以降低L1 cache miss的miss penalty。 |
+| sieve     | L1 D-cache大小、L2 cache latency | 程序需要的数据较大，无法全部存储在L1 D-cache中。若L1 D-cache更大，可以降低L1的miss rate。若L2 cache的延迟更小，可以降低L1 cache miss的miss penalty。 |
+| spmv      | L2 cache size、memory type                 | 程序局部性不好，经常触发cache未命中。降低cache缺失的惩罚中可以提升程序性能 |
 
 6.  选择一个benchmark，提出一种你认为对该benchmark非常有效的应用程序增强、ISA 增强和微体系结构增强。
 
+
 选择mm。
+
 **应用程序增强：**
+
 把第21行的：
 ```
 i_row = i * row_size;
@@ -164,7 +192,11 @@ i_row = i * row_size;
 m1[i_row + k + kk]
 ```
 也可以提到外面。
+
 **ISA增强：**
+
 例如设计更强大的向量指令，提升数据级并行
+
 **体系结构增强：**
+
 调整cache，issue width，cpu type等信息。优化电路中的关键路径
