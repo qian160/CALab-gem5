@@ -10,12 +10,13 @@
 ```
 parser.add_argument("--issue_width", type=int, default=8)
 ```
+![输入图片说明](images/4.png)
 但是这还只是解析了参数，要使该参数生效，还需要在se.py中添加相应的代码。于是我在se.py的199行添加了：
 ```
 if args.cpu_type == "DerivO3CPU":
 	cpu.issueWidth = args.issue_width
 ```
-
+![输入图片说明](images/5.png)
 可以使用以下方法测试配置是否生效：
 ```
 ./build/X86/gem5.opt configs/example/se.py --cmd=tests/test-progs/hello/bin/x86/linux/hello --cpu-type=DerivO3CPU --caches --issue_width=2
@@ -107,7 +108,7 @@ cat m5out/config.ini | grep issue
 | config7 | 0.997 | 0.767 | 0.926  | 1.00 | 0.985 |
 
  - sieve的测试结果实际上是0.9996
- - config2中的CPU不支持分支预测，因此无法根据给出公式统计memory regularity指标
+ - config2中的CPU不支持分支预测，因此无法根据给出公式统计control regularity指标
 
 ### memory locality
 表达式和memory regularity一样
@@ -170,7 +171,7 @@ int main(int argc, char* argv[]) {
 
 | benchmark | 敏感微架构参数                             | 说明                                                         |
 | --------- | ------------------------------------------ | ------------------------------------------------------------ |
-| lfsr      | L1 D-cache latency                         | 程序局部性良好，64KB的L1 D-cache已经够用。降低L1 cache的延迟，可以降低每一次cache访问的时间。 |
+| lfsr      | L1 D-cache latency、CPU type               | 程序局部性良好，64KB的L1 D-cache已经够用。降低L1 cache的延迟，可以降低每一次cache访问的时间。该程序的control regularity表现不好，若特定的CPU type能够达到更高的分支预测成功率，则可以提高总体性能 |
 | merge     | L1 D-cache latency、CPU type               | 程序局部性良好，64KB的L1 D-cache已经够用。降低L1 cache的延迟，可以降低每一次cache访问的时间。同时，由于merge的control regularity相对不是特别好，若特定的CPU type能够达到更高的分支预测成功率，则可以提高总体性能。 |
 | mm        | L1 D-cache大小、L2 cache latency           | 程序需要的数据较大，无法全部存储在L1 D-cache中。若L1 D-cache更大，可以降低L1的miss rate。若L2 cache的延迟更小，可以降低L1 cache miss的miss penalty。 |
 | sieve     | L1 D-cache大小、L2 cache latency | 程序需要的数据较大，无法全部存储在L1 D-cache中。若L1 D-cache更大，可以降低L1的miss rate。若L2 cache的延迟更小，可以降低L1 cache miss的miss penalty。 |
