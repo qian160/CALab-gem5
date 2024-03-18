@@ -37,9 +37,10 @@ gem5模拟器中的计算机部件都是模块化的，教程上面把这些一�
 
 System和Root这两个SimObjects比较特殊，有点算是背景板。如果想做一些实际的配置的话基本上离不开这两个SimObjects
 
-### ports：
+### Memory Objects
+#### ports：
 
-gem5中的每个**内存部件**都具有“端口”这一抽象，端口的类型分为接收（response）和发送（request），我们在声明了内存部件后还需要把他们的端口接入系统。这里需要注意：只有不同类型的端口才能够连接起来。例如我们不能把两个都是接收类型的端口连在一起
+gem5中的每个**内存部件**都具有“端口”这一抽象，端口的类型分为接收（response）和发送（request），我们在声明了内存部件后还需要把他们的端口接入系统。这里需要注意：只有不同类型的端口才能够连接起来。
 
 只要类型匹配，被连接的两个端口处于等号左右的顺序并不重要。比如我们可以这样连线：
 ```
@@ -50,11 +51,18 @@ system.cpu.icache_port = system.l1_cache.cpu_side
 system.membus.cpu_side_ports = system.cpu.icache_port 
 ```
 
-### cache
+#### cache
 由于历史原因，目前的gem5中有两种cache：**Classic caches**  和**Ruby**，区别貌似是Ruby可以用来测试cache一致性，并且需要我们提供协议的细节。而Classic caches已经内置了一种cache一致性协议。如果我们不想关心协议细节的话就可以选择简化版的Classic caches。文档上面说未来有把这两套cache系统统一的打算。
 
 我们可以用内置脚本中提供的cache，也可以编写自己的cache类，替换策略，参数什么的都可以配置。然后让这个类继承**Cache**。lab3里面会有相关内容
 
+#### Packets
+内存部件的端口之间通过互发**数据包**的方式来通信。
+
+todo
+
+![Simple master-slave interaction when both can accept the request and
+the response.](https://www.gem5.org/_pages/static/figures/master_slave_1.png)
 
 ## 工作流程：
 先使用scons编译出gem5模拟器的可执行文件，然后就可以用那个可执行文件来跑模拟程序了。不过在那之前还需要我们提供一个**配置文件**，用来描述我们想要模拟一台怎样的计算机。在那个文件里我们可以列出需要的SimObjects，配置他们的参数以及做连线。
@@ -120,8 +128,8 @@ todo
 这个py类需要继承SimObject，并且里面需要声明3个重要参数：
 
  - type：我们希望包装的那个c++类名
- - cxx_header：那个c++类的头文件路径。如果使用相对路径的话，似乎是相对于src目录
- - cxx_class：该simObjects在c++端的实现。在第二步里会需要我们去编写这个c++类，这里只需要使用c++的命名空间的方式指出那个类的名字，和type似乎差不多？
+ - cxx_header：对应的c++类的头文件路径。如果使用相对路径的话，似乎是相对于src目录
+ - cxx_class：使用c++的命名空间的方式指出那个类的名字，和type似乎差不多？
 
 ```
 from m5.params import *
@@ -131,15 +139,17 @@ class HelloObject(SimObject):
 	type = 'HelloObject'
 	cxx_header = "learning_gem5/part2/hello_object.hh"
 	cxx_class = "gem5::HelloObject"
-
-time_to_wait = Param.Latency("Time before firing the event")
-
+	# 其它自定义参数，可以在c++端使用
+	time_to_wait = Param.Latency("Time before firing the event")
 	foo = Param.Int(114514, "test")
 ```
 
 在这个py文件里还可以通过Param来声明一些参数，然后c++端的代码可以到访问这些参数。
-例如像上面的最后一行里声明了一个叫做foo的参数，然后注意c++端的很多类函数也都有一个叫做params的参数，可以通过他来访问python端声明的变量。例如：
 
+ 2. 编写simObjects的c++文件
+
+包含头文件(cxx_header)和源文件(cxx_class)。
+编写c++端代码时，很多类的成员函数都包含了一个叫做params的参数，可以使用他来访问那些在.py中定义的变量。例如
 ```
 HelloObject::HelloObject(const HelloObjectParams &params) :
 	SimObject(params)
@@ -147,20 +157,20 @@ HelloObject::HelloObject(const HelloObjectParams &params) :
 	std::cout << params.foo << std::endl;
 }
 ```
- 2. 编写simObjects的c++文件
-
-包含头文件(cxx_header)和源文件(cxx_class)。
-编写c++端代码时，可以使用params这个变量来访问那些在.py中定义的变量
-
+所有的文件都要包含在namespace gem5里面。官方教程上没有这么写，会导致编译错误，而且GoodbyeObject构造函数的函数签名也有错误，应该改成：
+```
+GoodbyeObject(const GoodbyeObjectParams &p);
+```
  3. 向编译系统“注册”这些py和c++文件
 
-gem5使用scons来做构建，我们要做的就是在之前编写了自定义simObjects的目录下再编写一个**SConscript**，其本质上也是一个python文件，支持python各种语法。实例：
+gem5使用scons来做软件的构建，我们要做的就是在之前编写了自定义simObjects的目录下再编写一个**SConscript**，实例：
 ```
 Import('*')
 
 SimObject('HelloObject.py', sim_objects=['HelloObject'])
 Source('hello_object.cc')
 ```
+并且其本质上也是一个python文件，支持python各种语法。不过好像也用不到那么多语法
 
  4. 重新编译gem5
 
@@ -190,7 +200,7 @@ print('Exiting @ tick {} because {}'.format(
 		m5.curTick(), 	
 		exit_event.getCause()))
 ```
-需要注意的是所有的simObjects都需要被挂载到root这个变量的下面后才会被实例化
+所有的simObjects都需要被挂载到root这个变量的下面后才会被实例化
 
 运行效果：
 ![输入图片说明](images/6.png)
@@ -204,10 +214,8 @@ print('Exiting @ tick {} because {}'.format(
 sudo apt-get install libpng-dev
 ```
 但是安装后再去编译还是同样的报错，试了几次都不行。后来发现貌似要把编译出来的文件全部删掉重新编译。
-文档的后面也有提到，用的是这两个命令：
 ```
-python3 `which scons` --clean --no-cache # cleaning the build folder
-rm -rf build/ # completely removing the gem5 build folder
+rm -rf build/
 ```
 然后再重新编译就没问题了
 
@@ -241,4 +249,4 @@ scons build/RISCV/gem5.fast -j8 CPU_MODELS=AtomicSimpleCPU,TimingSimpleCPU,O3CPU
 
 4. 其他
 
-编译时间较长，而且占用资源较多。如果虚拟机的运行内存不足也会编译失败。我电脑配置还行，以fast模式编译x86的时候也花了十几分钟。riscv的编译时间还要更久一些
+编译时间较长，而且占用资源较多。如果虚拟机的运行内存不足也会导致编译失败。（前面的编译过程全部正常，但最后的链接步骤容易失败）

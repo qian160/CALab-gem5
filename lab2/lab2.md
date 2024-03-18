@@ -10,13 +10,13 @@
 ```
 parser.add_argument("--issue_width", type=int, default=8)
 ```
-![输入图片说明](images/4.png)
+![输入图片说明](../images/4.png)
 但是这还只是解析了参数，要使该参数生效，还需要在se.py中添加相应的代码。于是我在se.py的199行添加了：
 ```
 if args.cpu_type == "DerivO3CPU":
 	cpu.issueWidth = args.issue_width
 ```
-![输入图片说明](images/5.png)
+![输入图片说明](../images/5.png)
 可以使用以下方法测试配置是否生效：
 ```
 ./build/X86/gem5.opt configs/example/se.py --cmd=tests/test-progs/hello/bin/x86/linux/hello --cpu-type=DerivO3CPU --caches --issue_width=2
