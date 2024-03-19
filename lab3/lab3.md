@@ -192,6 +192,7 @@ assoc和cache替换策略在这里对性能的影响似乎不大。应该是cach
     |  Max assoc   |      16      |      8       |      8     |
     | Lookup time |    100ps  |   500ps |  555ps |
     | Tag Latency  |        2       |      10    |    11    |
+<br>
     *注意lookup time（ps）和tag_latency（cycles，取整）的转化。*（1ps = 1E-12s）
     哪一种替换策略更优？说明理由。
 
@@ -203,5 +204,4 @@ assoc和cache替换策略在这里对性能的影响似乎不大。应该是cach
 | config2 | NMRU   | 8      | 10          | 5082746500 |
 | config3 | LIP    | 8      | 11          | 5501477000 |
 
-
-在该情况下，Random策略那一组的表现最好。因为待测程序的局部性优秀，cache命中率高，所以每次查阅cache时的tag_latency成为了关键因素。Random策略处理方式比较简单，所以代价较小，在这里体现出了优势。
+在该情况下，Random策略那一组的表现最好。因为待测程序的局部性优秀，cache命中率高，所以每次查阅cache时的tag_latency成为了关键因素。这里Random策略的latency较小，所以体现出了优势。
