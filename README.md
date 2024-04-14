@@ -1,10 +1,6 @@
-# StackEdit中文版
-StackEdit中文版默认空间
+gem5 学习笔记(随缘更新中)
 
-官方地址：https://stackedit.cn
-开源地址：https://gitee.com/mafgwo/stackeditgem5 学习笔记(随缘更新中)
-
-主要是参考了官方的那个[教程](https://www.gem5.org/documentation/learning_gem5/introduction/)，边看边写一些心得。
+主要是参考了官方的那个[教程](https://www.gem5.org/documentation/learning_gem5/introduction/)，边看边写一些心得，有些文字可能不一定准确。
 目前使用的编译命令：
 ```
 scons build/X86/gem5.fast -j8
