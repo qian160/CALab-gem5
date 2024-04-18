@@ -163,7 +163,7 @@ cat m5out/stats.txt | grep cpi
 
 是。循环展开可以在存在data hazard的两条指令之间插入一些无关指令，从而减少潜在的data hazard。并且循环展开还减少了分支指令的数量，从而可以降低control hazard。
 
-但与此同时，循环展开后的cpi通常也会增大。这可能是循环展开让流水线更加紧凑，各执行单元容易同时处于忙碌，增大了structural hazard。
+但与此同时，循环展开后的cpi通常也会增大。这可能是循环展开让流水线更加紧凑，各执行单元容易同时处于忙碌，增大了structural hazard。也可能是编译器优化和手工优化产生了冲突
 
 ### 3
 
